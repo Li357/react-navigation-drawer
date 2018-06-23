@@ -1,10 +1,11 @@
 import React from 'react';
-import { Dimensions } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 import DrawerLayout from 'react-native-drawer-layout-polyfill';
 import { SceneView } from 'react-navigation';
 
 import DrawerSidebar from './DrawerSidebar';
 import DrawerActions from '../routers/DrawerActions';
+import ResourceSavingScene from './ResourceSavingScene';
 
 /**
  * Component that renders the drawer.
@@ -94,9 +95,9 @@ export default class DrawerView extends React.PureComponent {
   render() {
     const { state } = this.props.navigation;
     const activeKey = state.routes[state.index].key;
-    const descriptor = this.props.descriptors[activeKey];
+    const activeDescriptor = this.props.descriptors[activeKey];
 
-    const { drawerLockMode } = descriptor.options;
+    const { drawerLockMode } = activeDescriptor.options;
 
     return (
       <DrawerLayout
@@ -122,11 +123,25 @@ export default class DrawerView extends React.PureComponent {
             : DrawerLayout.positions.Left
         }
       >
-        <SceneView
-          navigation={descriptor.navigation}
-          screenProps={this.props.screenProps}
-          component={descriptor.getComponent()}
-        />
+        {state.routes.map(route => {
+          const isFocused = activeKey === route.key;
+          const descriptor = this.props.descriptors[route.key];
+
+          // Mimic ResourceSavingScene from react-navigation-tabs
+          return (
+            <ResourceSavingScene
+              key={route.key}
+              style={[StyleSheet.absoluteFill, { opacity: isFocused ? 1 : 0 }]}
+              isFocused={isFocused}
+            >
+              <SceneView
+                navigation={descriptor.navigation}
+                screenProps={this.props.screenProps}
+                component={descriptor.getComponent()}
+              />
+            </ResourceSavingScene>
+          );
+        })}
       </DrawerLayout>
     );
   }
